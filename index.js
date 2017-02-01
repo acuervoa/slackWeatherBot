@@ -4,7 +4,8 @@ const natural = require('natural');
 
 const Bot = require('./Bot');
 
-const tokenizer = new natural.TreebankWordTokenizer();
+const stemmer = natural.PorterStemmer;
+stemmer.attach();
 
 const bot = new Bot({
     token: process.env.SLACK_TOKEN,
@@ -12,8 +13,9 @@ const bot = new Bot({
     autoMark: true
 });
 
-bot.respondTo('', (message, channel, user) => {
-    let tokenizedMessage = tokenizer.tokenize(message.text);
 
-    bot.send(`Tokenized message: ${JSON.stringify(tokenizedMessage)}`, channel);
+bot.respondTo('', (message, channel, user) => {
+
+    let stemmedMessage = message.text.tokenizeAndStem();
+    bot.send(`Tokenized message: ${JSON.stringify(stemmedMessage)}`, channel);
 });
