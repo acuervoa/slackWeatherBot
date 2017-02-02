@@ -23,7 +23,7 @@ class Bot {
             let team = this.slack.dataStore.getTeamById(this.slack.activeTeamId);
 
             this.name = user.name;
-
+            this.id = user.id
             console.log(`Connected to ${team.name} as ${user.name}`);
         });
 
@@ -48,13 +48,42 @@ class Bot {
         });
     }
 
-    respondTo(keywords, callback, start) {
-        if (start) {
-            keywords = '^' + keywords;
+    respondTo(opts, callback, start) {
+        if (!this.id) {
+            this.slack.on(CLIENT_EVENTS.RTM.RTM_CONNECTION_OPENED, () => {
+                createRegex(this.id, this.keywords);
+            });
+        } else {
+            createRegex(this.id, this.keywords);
         }
 
-        let regex = new RegExp(keywords, 'i');
-        this.keywords.set(regex, callback);
+        function createRegex(id, keywords) {
+            if (opts === Object(opts)) {
+                opts = {
+                    mention: opts.mention || false,
+                    keywords: opts.keywords || '',
+                    start: start || false
+                };
+            } else {
+                opts = {
+                    mention: false,
+                    keywords: opts,
+                    start: start || false
+                };
+            }
+
+            if (opts.mention) {
+                opts.keywords = `<@${id}>:* ${opts.keywords}`;
+            } else {
+                opts.keywords = start ? '^' + opts.keywords : opts.keywords;
+            }
+
+            let regex = new RegExp(opts.keywords, 'i');
+            keywords.set(regex, callback);
+        }
+
+
+
     }
 
     send(message, channel, cb) {
